@@ -11,7 +11,8 @@ class Vision {
 public:
     static cv::Mat Gaussian_Kernel(const int& sigma, const int& width);
     static cv::Mat Covolution(const cv::Mat& img, const cv::Mat& kernel, const int& kernel_size);
-
+    static void Normalize(const cv::Mat& src, cv::Mat& des);
+    static cv::Mat Canny(const cv::Mat& img,const int& sigma, const int& width);
 private:
     static float cal_value(const cv::Mat& img, const cv::Mat& kernel, const int& kernel_size, int x,int y);
 };

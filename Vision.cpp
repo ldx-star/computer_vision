@@ -8,7 +8,7 @@
 cv::Mat Vision:: Gaussian_Kernel(const int &sigma, const int &width) {
     if (width % 2 == 0) {
         //暂时只接受奇数，后续完善
-        std::cout << "width不能为奇数" << std::endl;
+        std::cout << "width必须为奇数" << std::endl;
         exit(1);
     }
     int num = width / 2;
@@ -59,4 +59,23 @@ float Vision::cal_value(const cv::Mat& img, const cv::Mat& kernel, const int& ke
         }
     }
     return value;
+}
+
+void Vision::Normalize(const cv::Mat &src, cv::Mat &des) {
+    des = src;
+    for(int i = 0; i < src.rows;i++){
+        for(int j = 0; j < src.cols; j++){
+            des.at<float>(i,j) = src.at<float>(i,j) / 255;
+        }
+    }
+}
+
+/*
+ * canny边缘提取器
+ * @param img
+ * @param sigma
+ * @param width
+ */
+cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
+
 }
