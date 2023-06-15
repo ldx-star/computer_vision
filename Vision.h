@@ -10,6 +10,10 @@
 class Vision {
 public:
     static cv::Mat Gaussian_Kernel(const int& sigma, const int& width);
+    static cv::Mat Covolution(const cv::Mat& img, const cv::Mat& kernel, const int& kernel_size);
+
+private:
+    static float cal_value(const cv::Mat& img, const cv::Mat& kernel, const int& kernel_size, int x,int y);
 };
 
 
