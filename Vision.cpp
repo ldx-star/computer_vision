@@ -77,5 +77,53 @@ void Vision::Normalize(const cv::Mat &src, cv::Mat &des) {
  * @param width
  */
 cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
+    //获得gaussian_kernel
+    cv::Mat gaussian_kernel = Vision::Gaussian_Kernel(sigma,width);
+    //获得高斯偏导模板
+    cv::Mat horizontal_kernel(3,3,CV_32F);
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(j == 0){
+                horizontal_kernel.at<float>(i,j) = -1.0;
+            }else if(j == 1){
+                horizontal_kernel.at<float>(i,j) = 0;
+            }else{
+                horizontal_kernel.at<float>(i,j) = 1.0;
+            }
+        }
+    }
+    cv::Mat vertical_kernel(3,3,CV_32F);
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(i == 0){
+                vertical_kernel.at<float>(i,j) = 1.0;
+            }else if(i == 1){
+                vertical_kernel.at<float>(i,j) = 0;
+            }else{
+                vertical_kernel.at<float>(i,j) = -1.0;
+            }
+        }
+    }
+    cv::Mat horizontal_gaussian_filter;
+    cv::Mat vertical_gaussian_filter;
+    cv::filter2D(gaussian_kernel,horizontal_gaussian_filter,CV_32F,horizontal_kernel);
+    cv::filter2D(gaussian_kernel,vertical_gaussian_filter,CV_32F,vertical_kernel);
+
+    //用高斯偏导卷积模板对img卷积
+    cv::Mat horizontal_img;
+    cv::Mat vertical_img;
+    cv::filter2D(img,horizontal_img,CV_32F,horizontal_gaussian_filter);
+    cv::filter2D(img,vertical_img,CV_32F,vertical_gaussian_filter);
+    cv::Mat square_horizontal_img;
+    cv::Mat square_vertical_img;
+    cv::pow(horizontal_img,2,square_horizontal_img);
+    cv::pow(vertical_img,2,square_vertical_img);
+
+    cv::Mat out_img;
+    cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
+
+    //threshold
+
+    return out_img;
 
 }
