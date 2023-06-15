@@ -1,0 +1,16 @@
+# ninja log v5
+0	1693	1686800035255091503	CMakeFiles/computer_vision.dir/Vision.cpp.o	ad98eb9985a8488
+0	1695	1686800035255091503	CMakeFiles/computer_vision.dir/main.cpp.o	57d17e92c36418ec
+0	1723	1686800070834752870	CMakeFiles/computer_vision.dir/main.cpp.o	247d48b3dfb756c4
+0	1744	1686800070854754790	CMakeFiles/computer_vision.dir/Vision.cpp.o	19d27ca81e224e8c
+0	1589	1686800277569821950	CMakeFiles/computer_vision.dir/Vision.cpp.o	19d27ca81e224e8c
+1589	1660	1686800277637825985	computer_vision	e792414ffa10cab2
+1	1769	1686800339870911565	CMakeFiles/computer_vision.dir/Vision.cpp.o	19d27ca81e224e8c
+1769	1839	1686800339942911311	computer_vision	e792414ffa10cab2
+1	1534	1686800421047177685	CMakeFiles/computer_vision.dir/main.cpp.o	247d48b3dfb756c4
+1534	1603	1686800421115178324	computer_vision	e792414ffa10cab2
+1	1737	1686800555405452719	CMakeFiles/computer_vision.dir/main.cpp.o	247d48b3dfb756c4
+1	1763	1686800555433453373	CMakeFiles/computer_vision.dir/Vision.cpp.o	19d27ca81e224e8c
+1763	1835	1686800555505455052	computer_vision	e792414ffa10cab2
+1	1595	1686800631635438328	CMakeFiles/computer_vision.dir/Vision.cpp.o	19d27ca81e224e8c
+1595	1666	1686800631703440268	computer_vision	e792414ffa10cab2
