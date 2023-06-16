@@ -1,4 +1,4 @@
-/snap/clion/237/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/237/bin/ninja/linux/x64/ninja -G Ninja -S /media/liangdaxin/sd1/computer_vision -B /media/liangdaxin/sd1/computer_vision/cmake-build-debug
+/snap/clion/237/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" -S /home/liangdaxin/computer_vision -B /home/liangdaxin/computer_vision/cmake-build-debug
 -- The C compiler identification is GNU 9.4.0
 -- The CXX compiler identification is GNU 9.4.0
 -- Detecting C compiler ABI info
@@ -11,7 +11,7 @@
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Found OpenCV: /usr/local (found version "4.7.0") 
+-- Found OpenCV: /usr/local (found version "4.6.0") 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /media/liangdaxin/sd1/computer_vision/cmake-build-debug
+-- Build files have been written to: /home/liangdaxin/computer_vision/cmake-build-debug

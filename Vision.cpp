@@ -100,8 +100,8 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
 
     //Non-maximum suppression
-    cv::Mat gradient,angle;
-    get_gradient_img(out_img,gradient,angle);
+    cv::Mat suppression_img = Non_maximum_suppression(out_img);
+
 
     //threshold
     //high threshold
@@ -110,12 +110,30 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     cv::Mat low_threshold_img = Threshold(out_img,0.05,1.0);
 
 
+
     cv::imshow("img",out_img);
     cv::imshow("high_threshold_img",high_threshold_img);
     cv::imshow("low_threshold_img",low_threshold_img);
     cv::waitKey();
     return low_threshold_img;
 
+}
+
+cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img) {
+    cv::Mat gradient,angle;
+    get_gradient_img(img,gradient,angle);
+
+    cv::Mat ret = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+    for(int i = 0; i < img.rows; i++){
+        for(int j = 0; j < img.cols;j++){
+            if(abs(img.at<float>(i,j)) < 0.03){
+                ret.at<float>(i,j) = 0;
+            }
+            else{
+                if(angle.at<float>());
+            }
+        }
+    }
 }
 
 cv::Mat Vision::Threshold(const cv::Mat& img, double threshold, double max) {
@@ -153,6 +171,20 @@ void Vision::get_gradient_img(const cv::Mat &img,cv::Mat& gradient, cv::Mat& ang
             }
         }
     }
-    cv::cartToPolar(new_img_x,new_img_y,gradient,angle, true);
+    cartToPolar(new_img_x,new_img_y,gradient,angle);
+
+}
+
+void Vision::cartToPolar(cv::Mat &new_img_x, cv::Mat &new_img_y, cv::Mat &gradient, cv::Mat &angle) {
+    int rows = new_img_x.rows;
+    int cols = new_img_x.cols;
+    gradient = cv::Mat::zeros(rows,cols,CV_32F);
+    angle = cv::Mat::zeros(rows,cols,CV_32F);
+    for(int i = 0; i < rows; i++){
+        for(int j = 0; j < cols; j++){
+           gradient.at<float>(i,j) = cv::sqrt(new_img_x.at<float>(i,j)*new_img_x.at<float>(i,j) + new_img_y.at<float>(i,j)*new_img_y.at<float>(i,j));
+           angle.at<float>(i,j) = atan(new_img_y.at<float>(i,j)/new_img_x.at<float>(i,j));
+        }
+    }
 
 }
