@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "computer_vision::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-computer_vision-Debug-a05a617fa6fe874a80ee.json",
+					"jsonFile" : "target-computer_vision-Debug-3f1876d0d7bbe52e4d21.json",
 					"name" : "computer_vision",
 					"projectIndex" : 0
 				}
@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/liangdaxin/computer_vision/cmake-build-debug",
-		"source" : "/home/liangdaxin/computer_vision"
+		"build" : "/media/liangdaxin/sd1/computer_vision/cmake-build-debug",
+		"source" : "/media/liangdaxin/sd1/computer_vision"
 	},
 	"version" : 
 	{

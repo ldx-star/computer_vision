@@ -15,6 +15,8 @@ public:
     static cv::Mat Canny(const cv::Mat& img,const int& sigma, const int& width);
 private:
     static float cal_value(const cv::Mat& img, const cv::Mat& kernel, const int& kernel_size, int x,int y);
+    static cv::Mat Threshold(const cv::Mat& img,double threshold,double max);
+    static void get_gradient_img(const cv::Mat& img, cv::Mat& gradient, cv::Mat& angle);
 };
 
 

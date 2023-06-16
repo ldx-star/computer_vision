@@ -80,34 +80,11 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     //获得gaussian_kernel
     cv::Mat gaussian_kernel = Vision::Gaussian_Kernel(sigma,width);
     //获得高斯偏导模板
-    cv::Mat horizontal_kernel(3,3,CV_32F);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            if(j == 0){
-                horizontal_kernel.at<float>(i,j) = -1.0;
-            }else if(j == 1){
-                horizontal_kernel.at<float>(i,j) = 0;
-            }else{
-                horizontal_kernel.at<float>(i,j) = 1.0;
-            }
-        }
-    }
-    cv::Mat vertical_kernel(3,3,CV_32F);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            if(i == 0){
-                vertical_kernel.at<float>(i,j) = 1.0;
-            }else if(i == 1){
-                vertical_kernel.at<float>(i,j) = 0;
-            }else{
-                vertical_kernel.at<float>(i,j) = -1.0;
-            }
-        }
-    }
+
     cv::Mat horizontal_gaussian_filter;
     cv::Mat vertical_gaussian_filter;
-    cv::filter2D(gaussian_kernel,horizontal_gaussian_filter,CV_32F,horizontal_kernel);
-    cv::filter2D(gaussian_kernel,vertical_gaussian_filter,CV_32F,vertical_kernel);
+    cv::Sobel(gaussian_kernel, horizontal_gaussian_filter, CV_32F, 1, 0);
+    cv::Sobel(gaussian_kernel, vertical_gaussian_filter, CV_32F, 0, 1);
 
     //用高斯偏导卷积模板对img卷积
     cv::Mat horizontal_img;
@@ -122,8 +99,60 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     cv::Mat out_img;
     cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
 
-    //threshold
+    //Non-maximum suppression
+    cv::Mat gradient,angle;
+    get_gradient_img(out_img,gradient,angle);
 
-    return out_img;
+    //threshold
+    //high threshold
+    cv::Mat high_threshold_img = Threshold(out_img,0.1,1.0);
+    //low threshold
+    cv::Mat low_threshold_img = Threshold(out_img,0.05,1.0);
+
+
+    cv::imshow("img",out_img);
+    cv::imshow("high_threshold_img",high_threshold_img);
+    cv::imshow("low_threshold_img",low_threshold_img);
+    cv::waitKey();
+    return low_threshold_img;
+
+}
+
+cv::Mat Vision::Threshold(const cv::Mat& img, double threshold, double max) {
+    cv::Mat ret(img.rows,img.cols,CV_32F);
+    for(int i = 0; i < img.rows; i++){
+        for(int j = 0; j < img.cols; j++){
+            if(img.at<float>(i,j) < threshold){
+                ret.at<float>(i,j) = 0;
+            }else if(img.at<float>(i,j) > max){
+                ret.at<float>(i,j) = max;
+            }else{
+                ret.at<float>(i,j) = img.at<float>(i,j);
+            }
+        }
+    }
+    return ret;
+}
+
+void Vision::get_gradient_img(const cv::Mat &img,cv::Mat& gradient, cv::Mat& angle) {
+    cv::Mat x_kernel = (cv::Mat_<float>(1,2) << -1,1);
+    cv::Mat y_kernel = (cv::Mat_<float>(2,1) << -1,1);
+    cv::Mat new_img_x = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+    cv::Mat new_img_y = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+    for(int i = 0; i < img.rows; i++){
+        for(int j = 0; j < img.cols; j++){
+            if(j == 0){
+                new_img_y.at<float>(i,j) = 1.0;
+            }else{
+                new_img_y.at<float>(i,j) = img.at<float>(i,j-1)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*y_kernel.at<float>(1,0);
+            }
+            if(i == 0){
+                new_img_x.at<float>(i,j) = 1.0;
+            }else{
+                new_img_x.at<float>(i,j) = img.at<float>(i-1,j)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*x_kernel.at<float>(0,1);
+            }
+        }
+    }
+    cv::cartToPolar(new_img_x,new_img_y,gradient,angle, true);
 
 }

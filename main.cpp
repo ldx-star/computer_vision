@@ -180,18 +180,13 @@ void test6(){
     img.convertTo(img,CV_32F);
     Vision::Normalize(img,img);
     cv::Mat out_img = Vision::Canny(img,2,7);
-    cv::imshow("img",img);
-    cv::imshow("out_img",out_img);
-    cv::waitKey();
-}
-int main(){
-//    cv::Mat img1 = test();
-//    cv::Mat img2 = test5();
-//    cv::Mat img3 = test4();
-//    cv::imshow("img1",img1);
-//    cv::imshow("img2",img2);
-//    cv::imshow("img3",img3);
+//    cv::imshow("img",img);
+//    cv::imshow("out_img",out_img);
 //    cv::waitKey();
+}
+
+int main(){
     test6();
+
     return 0;
 }

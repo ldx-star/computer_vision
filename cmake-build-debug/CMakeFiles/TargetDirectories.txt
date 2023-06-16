@@ -1,3 +1,3 @@
-/home/liangdaxin/computer_vision/cmake-build-debug/CMakeFiles/computer_vision.dir
-/home/liangdaxin/computer_vision/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/liangdaxin/computer_vision/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/media/liangdaxin/sd1/computer_vision/cmake-build-debug/CMakeFiles/computer_vision.dir
+/media/liangdaxin/sd1/computer_vision/cmake-build-debug/CMakeFiles/edit_cache.dir
+/media/liangdaxin/sd1/computer_vision/cmake-build-debug/CMakeFiles/rebuild_cache.dir
