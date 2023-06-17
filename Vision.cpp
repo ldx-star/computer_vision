@@ -100,14 +100,17 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
 
     //Non-maximum suppression
-    cv::Mat suppression_img = Non_maximum_suppression(out_img);
+    cv::Mat suppression_img = Non_maximum_suppression(out_img,0.0);
 
+    cv::imshow("out_img",out_img);
+    cv::imshow("suppression_img",suppression_img);
+    cv::waitKey();
 
     //threshold
     //high threshold
-    cv::Mat high_threshold_img = Threshold(out_img,0.1,1.0);
+    cv::Mat high_threshold_img = Threshold(suppression_img,0.15,1.0);
     //low threshold
-    cv::Mat low_threshold_img = Threshold(out_img,0.05,1.0);
+    cv::Mat low_threshold_img = Threshold(suppression_img,0.05,1.0);
 
 
 
@@ -119,21 +122,73 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
 
 }
 
-cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img) {
+cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img,float theta) {
     cv::Mat gradient,angle;
     get_gradient_img(img,gradient,angle);
 
     cv::Mat ret = cv::Mat::zeros(img.rows,img.cols,CV_32F);
-    for(int i = 0; i < img.rows; i++){
-        for(int j = 0; j < img.cols;j++){
-            if(abs(img.at<float>(i,j)) < 0.03){
-                ret.at<float>(i,j) = 0;
+    for(int i = 1; i < img.rows; i++){
+        for(int j = 1; j < img.cols;j++){
+            float g1,g2,g3,g4;
+//            if(abs(img.at<float>(i,j)) < theta){
+//                ret.at<float>(i,j) = 0;
+//            }
+//            else{
+                //偏向垂直方向
+                if(abs(angle.at<float>(i,j)) > 1){
+                    g2 = img.at<float>(i-1,j);
+                    g4 = img.at<float>(i+1,j);
+                    if(angle.at<float>(i,j) > 0){
+                        /*
+                         *  g1 g2
+                         *     c
+                         *     g4 g3
+                         */
+                        g1 = img.at<float>(i-1,j-1);
+                        g3 = img.at<float>(i+1,j+1);
+                    }else{
+                        /*
+                         *      g2 g1
+                         *      c
+                         *   g3 g4
+                         */
+                        g1 = img.at<float>(i-1,j+1);
+                        g3 = img.at<float>(i+1,j-1);
+                    }
+                }
+                //偏水平方向
+                else{
+                    g2 = img.at<float>(i,j-1);
+                    g4 = img.at<float>(i,j+1);
+                    if(angle.at<float>(i,j) > 0){
+                        /*
+                         *  g1
+                         *  g2 c g4
+                         *       g3
+                         */
+                        g1 = img.at<float>(i-1,j-1);
+                        g3 = img.at<float>(i+1,j+1);
+                    }else{
+                        /*
+                         *       g3
+                         *  g2 c g4
+                         *  g1
+                         */
+                        g1 = img.at<float>(i+1,j-1);
+                        g3 = img.at<float>(i-1,j+1);
+                    }
+                //}
             }
-            else{
-                if(angle.at<float>());
+            float temp1 = abs(angle.at<float>(i,j)) * g1 + (1-abs(angle.at<float>(i,j))) * g2;
+            float temp2 = abs(angle.at<float>(i,j)) * g3 + (1-abs(angle.at<float>(i,j))) * g4;
+            if(img.at<float>(i,j) >= temp1 && img.at<float>(i,j) >= temp2 ){
+                ret.at<float>(i,j) = img.at<float>(i,j);
+            }else{
+                ret.at<float>(i,j) = 0;
             }
         }
     }
+    return ret;
 }
 
 cv::Mat Vision::Threshold(const cv::Mat& img, double threshold, double max) {
