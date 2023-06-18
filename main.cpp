@@ -184,9 +184,23 @@ void test6(){
 //    cv::imshow("out_img",out_img);
 //    cv::waitKey();
 }
+//测试图像
+cv::Mat create_test_img(){
+    cv::Mat img = cv::Mat::zeros(7,7,CV_32F);
 
+    for(int j = 0; j < img.cols; j++ ){
+        if(j < 3){
+            img.at<float>(3,j) = 0.8;
+        }else {
+            img.at<float>(3, j) = 0.6;
+        }
+    }
+    Vision::Thresholding1(img,0.3,0.8);
+
+    return img;
+}
 int main(){
+    //create_test_img();
     test6();
-
     return 0;
 }

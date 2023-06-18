@@ -100,21 +100,28 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
     cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
 
     //Non-maximum suppression
-    cv::Mat suppression_img = Non_maximum_suppression(out_img,0.0);
+    cv::Mat suppression_img = Non_maximum_suppression(out_img);
 
-    cv::imshow("out_img",out_img);
-    cv::imshow("suppression_img",suppression_img);
-    cv::waitKey();
+    //thresholding
+    cv::Mat threshold_img = Thresholding1(suppression_img,0,0.2);
+//
+//    cv::imshow("out_img",out_img);
+//    cv::imshow("suppression_img",suppression_img);
+//    cv::waitKey();
 
     //threshold
-    //high threshold
-    cv::Mat high_threshold_img = Threshold(suppression_img,0.15,1.0);
     //low threshold
     cv::Mat low_threshold_img = Threshold(suppression_img,0.05,1.0);
+    //high threshold
+    cv::Mat high_threshold_img = Threshold(suppression_img,0.2,1.0);
 
 
+    int count1 = count_pixel(high_threshold_img);
+    int count2 = count_pixel(low_threshold_img);
+    int count3 = count_pixel(threshold_img);
 
-    cv::imshow("img",out_img);
+
+    cv::imshow("threshold_img",threshold_img);
     cv::imshow("high_threshold_img",high_threshold_img);
     cv::imshow("low_threshold_img",low_threshold_img);
     cv::waitKey();
@@ -122,7 +129,7 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
 
 }
 
-cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img,float theta) {
+cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img) {
     cv::Mat gradient,angle;
     get_gradient_img(img,gradient,angle);
 
@@ -130,54 +137,49 @@ cv::Mat Vision::Non_maximum_suppression(const cv::Mat &img,float theta) {
     for(int i = 1; i < img.rows; i++){
         for(int j = 1; j < img.cols;j++){
             float g1,g2,g3,g4;
-//            if(abs(img.at<float>(i,j)) < theta){
-//                ret.at<float>(i,j) = 0;
-//            }
-//            else{
-                //偏向垂直方向
-                if(abs(angle.at<float>(i,j)) > 1){
-                    g2 = img.at<float>(i-1,j);
-                    g4 = img.at<float>(i+1,j);
-                    if(angle.at<float>(i,j) > 0){
-                        /*
-                         *  g1 g2
-                         *     c
-                         *     g4 g3
-                         */
-                        g1 = img.at<float>(i-1,j-1);
-                        g3 = img.at<float>(i+1,j+1);
-                    }else{
-                        /*
-                         *      g2 g1
-                         *      c
-                         *   g3 g4
-                         */
-                        g1 = img.at<float>(i-1,j+1);
-                        g3 = img.at<float>(i+1,j-1);
-                    }
+            //偏向垂直方向
+            if(abs(angle.at<float>(i,j)) < 1){
+                g2 = img.at<float>(i-1,j);
+                g4 = img.at<float>(i+1,j);
+                if(angle.at<float>(i,j) > 0){
+                    /*
+                     *  g1 g2
+                     *     c
+                     *     g4 g3
+                     */
+                    g1 = img.at<float>(i-1,j-1);
+                    g3 = img.at<float>(i+1,j+1);
+                }else{
+                    /*
+                     *      g2 g1
+                     *      c
+                     *   g3 g4
+                     */
+                    g1 = img.at<float>(i-1,j+1);
+                    g3 = img.at<float>(i+1,j-1);
                 }
-                //偏水平方向
-                else{
-                    g2 = img.at<float>(i,j-1);
-                    g4 = img.at<float>(i,j+1);
-                    if(angle.at<float>(i,j) > 0){
-                        /*
-                         *  g1
-                         *  g2 c g4
-                         *       g3
-                         */
-                        g1 = img.at<float>(i-1,j-1);
-                        g3 = img.at<float>(i+1,j+1);
-                    }else{
-                        /*
-                         *       g3
-                         *  g2 c g4
-                         *  g1
-                         */
-                        g1 = img.at<float>(i+1,j-1);
-                        g3 = img.at<float>(i-1,j+1);
-                    }
-                //}
+            }
+            //偏水平方向
+            else{
+                g2 = img.at<float>(i,j-1);
+                g4 = img.at<float>(i,j+1);
+                if(angle.at<float>(i,j) > 0){
+                    /*
+                     *  g1
+                     *  g2 c g4
+                     *       g3
+                     */
+                    g1 = img.at<float>(i-1,j-1);
+                    g3 = img.at<float>(i+1,j+1);
+                }else{
+                    /*
+                     *       g3
+                     *  g2 c g4
+                     *  g1
+                     */
+                    g1 = img.at<float>(i+1,j-1);
+                    g3 = img.at<float>(i-1,j+1);
+                }
             }
             float temp1 = abs(angle.at<float>(i,j)) * g1 + (1-abs(angle.at<float>(i,j))) * g2;
             float temp2 = abs(angle.at<float>(i,j)) * g3 + (1-abs(angle.at<float>(i,j))) * g4;
@@ -214,15 +216,15 @@ void Vision::get_gradient_img(const cv::Mat &img,cv::Mat& gradient, cv::Mat& ang
     cv::Mat new_img_y = cv::Mat::zeros(img.rows,img.cols,CV_32F);
     for(int i = 0; i < img.rows; i++){
         for(int j = 0; j < img.cols; j++){
-            if(j == 0){
+            if(i == 0){
                 new_img_y.at<float>(i,j) = 1.0;
             }else{
-                new_img_y.at<float>(i,j) = img.at<float>(i,j-1)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*y_kernel.at<float>(1,0);
+                new_img_y.at<float>(i,j) = img.at<float>(i-1,j)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*y_kernel.at<float>(1,0);
             }
-            if(i == 0){
+            if(j == 0){
                 new_img_x.at<float>(i,j) = 1.0;
             }else{
-                new_img_x.at<float>(i,j) = img.at<float>(i-1,j)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*x_kernel.at<float>(0,1);
+                new_img_x.at<float>(i,j) = img.at<float>(i,j-1)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*x_kernel.at<float>(0,1);
             }
         }
     }
@@ -241,5 +243,164 @@ void Vision::cartToPolar(cv::Mat &new_img_x, cv::Mat &new_img_y, cv::Mat &gradie
            angle.at<float>(i,j) = atan(new_img_y.at<float>(i,j)/new_img_x.at<float>(i,j));
         }
     }
+}
 
+//version1
+cv::Mat Vision:: Thresholding1(const cv::Mat& origin_img,float low_threshold,float high_threshold){
+    cv::Mat img = origin_img.clone();
+    cv::Mat ret = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+
+    for(int i = 1 ; i < img.rows;i++){
+        for(int j = 1;j < img.cols; j++){
+            if(img.at<float>(i,j) >= high_threshold){//与高阈值相连的点
+                ret.at<float>(i,j) = img.at<float>(i,j);
+                if(img.at<float>(i-1,j-1) > low_threshold && img.at<float>(i-1,j-1) < high_threshold){
+                    ret.at<float>(i-1,j-1) = high_threshold;
+                    img.at<float>(i-1,j-1) = high_threshold;
+                }
+                if(img.at<float>(i-1,j) > low_threshold && img.at<float>(i-1,j) < high_threshold){
+                    ret.at<float>(i-1,j) = high_threshold;
+                    img.at<float>(i-1,j) = high_threshold;
+                }
+                if(img.at<float>(i-1,j+1) > low_threshold && img.at<float>(i-1,j+1) < high_threshold){
+                    ret.at<float>(i-1,j+1) = high_threshold;
+                    img.at<float>(i-1,j+1) = high_threshold;
+                }
+                if(img.at<float>(i,j-1) > low_threshold && img.at<float>(i,j-1) < high_threshold){
+                    ret.at<float>(i,j-1) = high_threshold;
+                    img.at<float>(i,j-1) = high_threshold;
+                }
+                if(img.at<float>(i,j+1) > low_threshold && img.at<float>(i,j+1) < high_threshold){
+                    ret.at<float>(i,j+1) = high_threshold;
+                    img.at<float>(i,j+1) = high_threshold;
+                }
+                if(img.at<float>(i+1,j-1) > low_threshold && img.at<float>(i+1,j-1) < high_threshold){
+                    ret.at<float>(i+1,j-1) = high_threshold;
+                    img.at<float>(i+1,j-1) = high_threshold;
+                }
+                if(img.at<float>(i+1,j) > low_threshold && img.at<float>(i+1,j) < high_threshold){
+                    ret.at<float>(i+1,j) = high_threshold;
+                    img.at<float>(i+1,j) = high_threshold;
+                }
+                if(img.at<float>(i+1,j+1) > low_threshold && img.at<float>(i+1,j+1) < high_threshold){
+                    ret.at<float>(i+1,j+1) = high_threshold;
+                    img.at<float>(i+1,j+1) = high_threshold;
+                }
+            }
+        }
+    }
+    return ret;
+}
+//version2
+cv::Mat Vision:: Thresholding(cv::Mat& img,float low_threshold,float high_threshold){
+    cv::Mat gradient,angle;
+    get_gradient_img(img,gradient,angle);
+
+    cv::Mat ret = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+    cv::Mat ret1 = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+
+    for(int i = 1 ; i < img.rows;i++){
+        for(int j = 1;j < img.cols; j++){
+            if(img.at<float>(i,j) >= high_threshold){//与高阈值相连的点
+                ret.at<float>(i,j) = img.at<float>(i,j);
+                ret1.at<float>(i,j) = img.at<float>(i,j);
+                if(abs(angle.at<float>(i,j)) < 1) {
+                    //偏竖直方向
+                    if (img.at<float>(i - 1, j) >= low_threshold && img.at<float>(i - 1, j) < high_threshold) {
+                        ret.at<float>(i - 1, j) = high_threshold;
+                        img.at<float>(i - 1, j) = high_threshold;
+                    }
+                    if (img.at<float>(i + 1, j) >= low_threshold && img.at<float>(i + 1, j) < high_threshold) {
+                        ret.at<float>(i + 1, j) = high_threshold;
+                        img.at<float>(i + 1, j) = high_threshold;
+                    }
+                    if (angle.at<float>(i, j) > 0) {
+                        /*
+                         *  g1 g2
+                         *     c
+                         *     g4 g3
+                         */
+                        if (img.at<float>(i - 1, j) >= low_threshold && img.at<float>(i - 1, j) < high_threshold) {
+                            ret.at<float>(i - 1, j - 1) = high_threshold;
+                            img.at<float>(i - 1, j - 1) = high_threshold;
+                        }
+                        if (img.at<float>(i + 1, j + 1) >= low_threshold && img.at<float>(i + 1, j + 1) < high_threshold) {
+                            ret.at<float>(i + 1, j + 1) = high_threshold;
+                            img.at<float>(i + 1, j + 1) = high_threshold;
+                        }
+                    } else {
+                        /*
+                         *     g2 g1
+                         *     c
+                         *  g3 g4
+                         */
+                        if (img.at<float>(i - 1, j + 1) >= low_threshold && img.at<float>(i - 1, j + 1) < high_threshold) {
+                            ret.at<float>(i - 1, j + 1) = high_threshold;
+                            img.at<float>(i - 1, j + 1) = high_threshold;
+                        }
+                        if (img.at<float>(i + 1, j - 1) >= low_threshold && img.at<float>(i + 1, j - 1) < high_threshold) {
+                            ret.at<float>(i + 1, j - 1) = high_threshold;
+                            img.at<float>(i + 1, j - 1) = high_threshold;
+                        }
+                    }
+                }else{
+                    //偏水平方向
+                    if(img.at<float>(i,j-1) >= low_threshold && img.at<float>(i,j-1) < high_threshold){
+                        ret.at<float>(i, j - 1) = high_threshold;
+                        img.at<float>(i, j - 1) = high_threshold;
+                    }
+                    if(img.at<float>(i,j+1) >= low_threshold && img.at<float>(i,j+1) < high_threshold){
+                        ret.at<float>(i, j + 1) = high_threshold;
+                        img.at<float>(i, j + 1) = high_threshold;
+                    }
+                    if(angle.at<float>(i,j) > 0){
+                        /*
+                         *   g1
+                         *   g2 c g4
+                         *        g3
+                         */
+                        if(img.at<float>(i-1,j-1) >= low_threshold && img.at<float>(i-1,j-1) < high_threshold){
+                            ret.at<float>(i-1,j-1) = high_threshold;
+                            img.at<float>(i-1,j-1) = high_threshold;
+                        }
+                        if(img.at<float>(i+1,j+1) >= low_threshold && img.at<float>(i+1,j+1) < high_threshold){
+                            ret.at<float>(i+1,j+1) = high_threshold;
+                            img.at<float>(i+1,j+1) = high_threshold;
+                        }
+                    }else{
+                        /*
+                         *        g3
+                         *   g2 c g4
+                         *   g1
+                         */
+                        if(img.at<float>(i+1,j-1) >= low_threshold && img.at<float>(i+1,j-1) < high_threshold){
+                            ret.at<float>(i+1,j-1) = high_threshold;
+                            img.at<float>(i+1,j-1) = high_threshold;
+                        }
+                        if(img.at<float>(i-1,j+1) >= low_threshold && img.at<float>(i-1,j+1) < high_threshold){
+                            ret.at<float>(i-1,j+1) = high_threshold;
+                            img.at<float>(i-1,j+1) = high_threshold;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    int count1 = count_pixel(ret);
+    int count2 = count_pixel(ret1);
+    cv::imshow("ret",ret);
+    cv::imshow("ret1",ret1);
+    cv::waitKey();
+    return ret;
+}
+int Vision::count_pixel(const cv::Mat& img){
+    int count = 0;
+    for(int i = 0; i < img.rows; i++){
+        for(int j = 0; j < img.cols; j++){
+            if(img.at<float>(i,j) > 0){
+                count++;
+            }
+        }
+    }
+    return count;
 }
