@@ -98,34 +98,12 @@ cv::Mat Vision::Canny(const cv::Mat &img, const int &sigma, const int &width) {
 
     cv::Mat out_img;
     cv::sqrt(square_horizontal_img+square_vertical_img,out_img);
-
     //Non-maximum suppression
     cv::Mat suppression_img = Non_maximum_suppression(out_img);
-
     //thresholding
-    cv::Mat threshold_img = Thresholding1(suppression_img,0,0.2);
-//
-//    cv::imshow("out_img",out_img);
-//    cv::imshow("suppression_img",suppression_img);
-//    cv::waitKey();
+    cv::Mat threshold_img = Thresholding1(suppression_img,0.05,0.1);
 
-    //threshold
-    //low threshold
-    cv::Mat low_threshold_img = Threshold(suppression_img,0.05,1.0);
-    //high threshold
-    cv::Mat high_threshold_img = Threshold(suppression_img,0.2,1.0);
-
-
-    int count1 = count_pixel(high_threshold_img);
-    int count2 = count_pixel(low_threshold_img);
-    int count3 = count_pixel(threshold_img);
-
-
-    cv::imshow("threshold_img",threshold_img);
-    cv::imshow("high_threshold_img",high_threshold_img);
-    cv::imshow("low_threshold_img",low_threshold_img);
-    cv::waitKey();
-    return low_threshold_img;
+    return threshold_img;
 
 }
 
@@ -254,41 +232,42 @@ cv::Mat Vision:: Thresholding1(const cv::Mat& origin_img,float low_threshold,flo
         for(int j = 1;j < img.cols; j++){
             if(img.at<float>(i,j) >= high_threshold){//与高阈值相连的点
                 ret.at<float>(i,j) = img.at<float>(i,j);
-                if(img.at<float>(i-1,j-1) > low_threshold && img.at<float>(i-1,j-1) < high_threshold){
+                if(img.at<float>(i-1,j-1) >= low_threshold && img.at<float>(i-1,j-1) < high_threshold){
                     ret.at<float>(i-1,j-1) = high_threshold;
                     img.at<float>(i-1,j-1) = high_threshold;
                 }
-                if(img.at<float>(i-1,j) > low_threshold && img.at<float>(i-1,j) < high_threshold){
+                if(img.at<float>(i-1,j) >= low_threshold && img.at<float>(i-1,j) < high_threshold){
                     ret.at<float>(i-1,j) = high_threshold;
                     img.at<float>(i-1,j) = high_threshold;
                 }
-                if(img.at<float>(i-1,j+1) > low_threshold && img.at<float>(i-1,j+1) < high_threshold){
+                if(img.at<float>(i-1,j+1) >= low_threshold && img.at<float>(i-1,j+1) < high_threshold){
                     ret.at<float>(i-1,j+1) = high_threshold;
                     img.at<float>(i-1,j+1) = high_threshold;
                 }
-                if(img.at<float>(i,j-1) > low_threshold && img.at<float>(i,j-1) < high_threshold){
+                if(img.at<float>(i,j-1) >= low_threshold && img.at<float>(i,j-1) < high_threshold){
                     ret.at<float>(i,j-1) = high_threshold;
                     img.at<float>(i,j-1) = high_threshold;
                 }
-                if(img.at<float>(i,j+1) > low_threshold && img.at<float>(i,j+1) < high_threshold){
+                if(img.at<float>(i,j+1) >= low_threshold && img.at<float>(i,j+1) < high_threshold){
                     ret.at<float>(i,j+1) = high_threshold;
                     img.at<float>(i,j+1) = high_threshold;
                 }
-                if(img.at<float>(i+1,j-1) > low_threshold && img.at<float>(i+1,j-1) < high_threshold){
+                if(img.at<float>(i+1,j-1) >= low_threshold && img.at<float>(i+1,j-1) < high_threshold){
                     ret.at<float>(i+1,j-1) = high_threshold;
                     img.at<float>(i+1,j-1) = high_threshold;
                 }
-                if(img.at<float>(i+1,j) > low_threshold && img.at<float>(i+1,j) < high_threshold){
+                if(img.at<float>(i+1,j) >= low_threshold && img.at<float>(i+1,j) < high_threshold){
                     ret.at<float>(i+1,j) = high_threshold;
                     img.at<float>(i+1,j) = high_threshold;
                 }
-                if(img.at<float>(i+1,j+1) > low_threshold && img.at<float>(i+1,j+1) < high_threshold){
+                if(img.at<float>(i+1,j+1) >= low_threshold && img.at<float>(i+1,j+1) < high_threshold){
                     ret.at<float>(i+1,j+1) = high_threshold;
                     img.at<float>(i+1,j+1) = high_threshold;
                 }
             }
         }
     }
+    int count = count_pixel(ret);
     return ret;
 }
 //version2
@@ -386,11 +365,6 @@ cv::Mat Vision:: Thresholding(cv::Mat& img,float low_threshold,float high_thresh
             }
         }
     }
-    int count1 = count_pixel(ret);
-    int count2 = count_pixel(ret1);
-    cv::imshow("ret",ret);
-    cv::imshow("ret1",ret1);
-    cv::waitKey();
     return ret;
 }
 int Vision::count_pixel(const cv::Mat& img){

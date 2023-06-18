@@ -192,7 +192,7 @@ cv::Mat create_test_img(){
         if(j < 3){
             img.at<float>(3,j) = 0.8;
         }else {
-            img.at<float>(3, j) = 0.6;
+            img.at<float>(3, j) = 0.3;
         }
     }
     Vision::Thresholding1(img,0.3,0.8);
