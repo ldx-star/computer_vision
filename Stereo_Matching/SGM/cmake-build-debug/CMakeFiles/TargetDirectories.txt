@@ -1,0 +1,3 @@
+/media/liangdaxin/sd1/computer_vision/Stereo_Matching/SGM/cmake-build-debug/CMakeFiles/SGM.dir
+/media/liangdaxin/sd1/computer_vision/Stereo_Matching/SGM/cmake-build-debug/CMakeFiles/edit_cache.dir
+/media/liangdaxin/sd1/computer_vision/Stereo_Matching/SGM/cmake-build-debug/CMakeFiles/rebuild_cache.dir

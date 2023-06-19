@@ -199,8 +199,21 @@ cv::Mat create_test_img(){
 
     return img;
 }
+void test_hough(){
+    cv::Mat img = cv::imread("./coin.jpg",cv::IMREAD_GRAYSCALE);
+    cv::Mat canny_img;
+    cv::Canny(img,canny_img,50,255);
+//    std::cout<<canny_img.at<u_int16_t>(491,164)<<std::endl;
+    Vision::Hough(canny_img,5);
+//    cv::Size size = canny_img.size();
+//    cv::namedWindow("canny_img",cv::WINDOW_NORMAL);
+//    cv::resizeWindow("canny_img",ceil(size.width/3),ceil(size.height/3));
+//    cv::imshow("canny_img",canny_img);
+//
+//    cv::waitKey();
+//    std::cout << canny_img.size() << std::endl;
+}
 int main(){
-    //create_test_img();
-    test6();
+    test_hough();
     return 0;
 }

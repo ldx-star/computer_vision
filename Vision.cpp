@@ -5,6 +5,50 @@
 #include "Vision.h"
 #include <cmath>
 
+cv::Mat Vision::Hough(const cv::Mat &img, int step) {
+    cv::Mat hough_matrix = hough_algorithm(img,step);
+    cv::Size size = hough_matrix.size();
+    cv::namedWindow("hough_img",cv::WINDOW_NORMAL);
+    cv::resizeWindow("hough_img",ceil(size.width/3),ceil(size.height/3));
+    cv::imshow("hough_img",hough_matrix);
+}
+
+cv::Mat Vision:: hough_algorithm(const cv::Mat& img,int step){
+    int _x = img.rows;
+    int _y = img.cols;
+    int _r = ceil(sqrt(_x*_x + _y*_y));
+    cv::Mat hough_matrix = cv::Mat::zeros(_x,_y,_r);
+    cv::Mat angle;
+    cv::Mat gradient;
+    get_gradient_img(img,gradient,angle);
+    for(int i = 0; i < img.rows; i++){
+        for(int j = 0; j < img.cols; j++){
+            if(img.at<int>(i,j) > 0) {
+                int x = i;
+                int y = j;
+                int r = 0;
+                while (angle.at<float>(i,j) < 1.5 && x < _x && y < _y && r < _r) {//当梯度方向为90度时不采纳
+                    hough_matrix.at<int>(floor(x / step), floor(y / step), floor(r / step)) += 1;
+                    x += step;
+                    y += step * tan(angle.at<float>(i, j));
+                    r += sqrt(pow(step * tan(angle.at<float>(i, j)), 2) + pow(step, 2));
+                }
+                x = i;
+                y = j;
+                r = 0;
+                while(angle.at<float>(i,j) < 1.5 &&x >= 0 && y >= 0 && r >= 0){
+                    hough_matrix.at<int>(x / step, y / step, r / step) += 1;
+                    x -= step;
+                    y -= floor(step * tan(angle.at<float>(i, j)));
+                    r -= sqrt(pow(step * tan(angle.at<float>(i, j)), 2) + pow(step, 2));
+                }
+            }
+        }
+    }
+    return hough_matrix;
+}
+
+
 cv::Mat Vision:: Gaussian_Kernel(const int &sigma, const int &width) {
     if (width % 2 == 0) {
         //暂时只接受奇数，后续完善
@@ -188,21 +232,24 @@ cv::Mat Vision::Threshold(const cv::Mat& img, double threshold, double max) {
 }
 
 void Vision::get_gradient_img(const cv::Mat &img,cv::Mat& gradient, cv::Mat& angle) {
-    cv::Mat x_kernel = (cv::Mat_<float>(1,2) << -1,1);
-    cv::Mat y_kernel = (cv::Mat_<float>(2,1) << -1,1);
-    cv::Mat new_img_x = cv::Mat::zeros(img.rows,img.cols,CV_32F);
-    cv::Mat new_img_y = cv::Mat::zeros(img.rows,img.cols,CV_32F);
+    cv::Mat x_kernel = (cv::Mat_<int>(1,2) << -1,1);
+    cv::Mat y_kernel = (cv::Mat_<int>(2,1) << -1,1);
+    cv::Mat new_img_x = cv::Mat::zeros(img.rows,img.cols,CV_32S);
+    cv::Mat new_img_y = cv::Mat::zeros(img.rows,img.cols,CV_32S);
     for(int i = 0; i < img.rows; i++){
         for(int j = 0; j < img.cols; j++){
+            if(i == 491 && j == 165){
+                int a = 10;
+            }
             if(i == 0){
-                new_img_y.at<float>(i,j) = 1.0;
+                new_img_y.at<int>(i,j) = 1;
             }else{
-                new_img_y.at<float>(i,j) = img.at<float>(i-1,j)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*y_kernel.at<float>(1,0);
+                new_img_y.at<int>(i,j) = img.at<uchar>(i-1,j) * y_kernel.at<int>(0,0) + img.at<uchar>(i,j)*y_kernel.at<int>(1,0);
             }
             if(j == 0){
-                new_img_x.at<float>(i,j) = 1.0;
+                new_img_x.at<int>(i,j) = 1;
             }else{
-                new_img_x.at<float>(i,j) = img.at<float>(i,j-1)*y_kernel.at<float>(0,0) + img.at<float>(i,j)*x_kernel.at<float>(0,1);
+                new_img_x.at<int>(i,j) = img.at<uchar>(i,j-1)*y_kernel.at<int>(0,0) + img.at<uchar>(i,j)*x_kernel.at<int>(0,1);
             }
         }
     }
@@ -217,8 +264,15 @@ void Vision::cartToPolar(cv::Mat &new_img_x, cv::Mat &new_img_y, cv::Mat &gradie
     angle = cv::Mat::zeros(rows,cols,CV_32F);
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < cols; j++){
-           gradient.at<float>(i,j) = cv::sqrt(new_img_x.at<float>(i,j)*new_img_x.at<float>(i,j) + new_img_y.at<float>(i,j)*new_img_y.at<float>(i,j));
-           angle.at<float>(i,j) = atan(new_img_y.at<float>(i,j)/new_img_x.at<float>(i,j));
+            if(i == 491&& j == 164){
+                int a = 10;
+            }
+           gradient.at<float>(i,j) = sqrt(new_img_x.at<int>(i,j)*new_img_x.at<int>(i,j) + new_img_y.at<int>(i,j)*new_img_y.at<int>(i,j));
+           if(new_img_x.at<int>(i,j) != 0){
+               angle.at<float>(i,j) = atan(new_img_y.at<int>(i,j)/new_img_x.at<int>(i,j));
+           }else{
+               angle.at<float>(i,j) = M_PI / 2;;
+           }
         }
     }
 }
