@@ -16,7 +16,8 @@ void test_Sobel(){
     cv::namedWindow("y_derivative",cv::WINDOW_NORMAL);
     cv::resizeWindow("x_derivative",img.size()/3);
     cv::resizeWindow("y_derivative",img.size()/3);
-
+    cv::imwrite(OUT_PATH+"/x_derivative.jpg",x_derivative);
+    cv::imwrite(OUT_PATH+"/y_derivative.jpg",y_derivative);
     cv::imshow("x_derivative",x_derivative);
     cv::imshow("y_derivative",y_derivative);
     cv::waitKey();
@@ -38,6 +39,6 @@ void test_prewitt(){
 
 int main(){
     test_Sobel();
-    test_prewitt();
+    //test_prewitt();
     return 0;
 }

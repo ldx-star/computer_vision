@@ -11,6 +11,7 @@ class util {
 public:
     static void Sobel(const cv::Mat& img, cv::Mat& x_derivative, cv::Mat& y_derivative);
     static void Prewitt(const cv::Mat& img, cv::Mat& x_derivative, cv::Mat& y_derivative);
+    static void get_gradient(const cv::Mat& x_derivative,const cv::Mat& y_derivative, cv::Mat& )
 
 };
 
