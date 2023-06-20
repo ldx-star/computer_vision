@@ -1,0 +1,4 @@
+/snap/clion/237/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/237/bin/ninja/linux/x64/ninja -G Ninja -S /media/liangdaxin/sd1/computer_vision/Canny_edge_detection -B /media/liangdaxin/sd1/computer_vision/Canny_edge_detection/cmake-build-debug
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /media/liangdaxin/sd1/computer_vision/Canny_edge_detection/cmake-build-debug
