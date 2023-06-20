@@ -36,6 +36,7 @@ public:
 private:
     void CensusTransform();
     void ComputeCost();
+    void ComputeDisparity();
 private:
     bool is_initialized_; // 是否初始化标志
     cv::Mat left_img_;
@@ -46,6 +47,7 @@ private:
     cv::Mat census_left_;
     cv::Mat census_right_;
     uint8* cost_init_; // （rows,cols,disp_range）
+    cv::Mat disp_left_;
 };
 
 

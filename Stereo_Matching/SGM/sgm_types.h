@@ -5,6 +5,9 @@
 #ifndef SGM_SGM_TYPES_H
 #define SGM_SGM_TYPES_H
 #include <iostream>
+#include <limits>
+
+constexpr auto Invalid_Float = std::numeric_limits<float>::infinity(); // 无效值
 
 typedef int8_t			sint8;		// 有符号8位整数
 typedef uint8_t			uint8;		// 无符号8位整数

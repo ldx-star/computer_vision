@@ -36,5 +36,8 @@ int main(int argv, char** argc){
     sgm.Initialize(width,height,option);
     cv::Mat disp_img;
     sgm.Match(left_img,right_img,disp_img);
+
+    //显示视差图
+
     return 0;
 }
