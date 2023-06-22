@@ -4,6 +4,9 @@
 
 #include "SGM.h"
 #include <cassert>
+#include <chrono>
+#include <algorithm>
+#include <vector>
 
 SGM::SGM() {
 
@@ -11,6 +14,8 @@ SGM::SGM() {
 
 SGM::~SGM() {
     delete[] cost_init_;
+    delete[] cost_aggr_;
+    delete[] cost_aggr_1_;
 }
 
 bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOption &option) {
@@ -35,6 +40,11 @@ bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOp
     }
     uint32 size = width_ * height_ * disp_range;
     cost_init_ = new uint8[size]();
+    cost_aggr_ = new uint8[size]();
+    cost_aggr_1_ = new uint8[size]();
+    cost_aggr_2_ = new uint8[size]();
+    cost_aggr_3_ = new uint8[size]();
+    cost_aggr_4_ = new uint8[size]();
 
     is_initialized_ = true;
 }
@@ -55,8 +65,26 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
     //代价计算
     ComputeCost();
 
+    auto end = std::chrono::steady_clock::now();
+    auto tt = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    printf("computing cost! timimg:%lfs\n", tt.count() / 1000.0);
+    start = std::chrono::steady_clock::now();
+
+    //聚合代价
+    CostAggregation();
+
     //视差计算
-    SGM::ComputeDisparity();
+    SGM::ComputeDisparity(cost_aggr_);
+    sgm_util::save_img(disp_left_,"../out/cost_aggr.jpg");
+//    SGM::ComputeDisparity(cost_aggr_1_);
+//    sgm_util::save_img(disp_left_,"../out/aggr1.jpg");
+//    SGM::ComputeDisparity(cost_aggr_2_);
+//    sgm_util::save_img(disp_left_,"../out/aggr2.jpg");
+//    SGM::ComputeDisparity(cost_aggr_3_);
+//    sgm_util::save_img(disp_left_,"../out/aggr3.jpg");
+//    SGM::ComputeDisparity(cost_aggr_4_);
+//    sgm_util::save_img(disp_left_,"../out/aggr4.jpg");
+
 
 //    cv::Mat img = disp_left_.clone();
 //    img /= 255;
@@ -65,18 +93,53 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
 //    cv::waitKey();
 }
 
-void SGM::ComputeDisparity() {
+void SGM::CostAggregation() {
+    //聚合路径
+    //1、左->右/右->左
+    const auto &min_disparity = option_.min_disparity;
+    const auto &max_disparity = option_.max_disparity;
+    const sint32 disp_range = max_disparity - min_disparity;
+    assert(disp_range > 0);
+    const sint32 size = width_ * height_ * disp_range;
+    assert(size >= 0);
+
+    const auto& P1 = option_.p1;
+    const auto& P2 = option_.p2;
+
+    if(option_.num_paths == 4 || option_.num_paths == 8){
+        //左右聚合
+        sgm_util::CostAggregateLeftRight(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_2_,
+                                         false);
+        sgm_util::CostAggregateLeftRight(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_1_,
+                                         true);
+        //上下聚合
+        sgm_util::CostAggregateUpDown(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_4_,
+                                         false);
+        sgm_util::CostAggregateUpDown(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_3_,
+                                      true);
+    }
+
+    if(option_.num_paths == 8){
+        //左上右下聚合
+
+        //右上左下聚合
+    }
+
+    //把4/8个方向加起来
+    for(sint32 i = 0; i < size;i++){
+        cost_aggr_[i] = cost_aggr_1_[i] + cost_aggr_2_[i] + cost_aggr_3_[i] + cost_aggr_4_[i];
+    }
+}
+
+void SGM::ComputeDisparity(uint8* cost_ptr) {
     const sint32 min_disparity = option_.min_disparity;
     const sint32 max_disparity = option_.max_disparity;
-    auto cost_ptr = cost_init_;
+    //auto cost_ptr = cost_aggr_2_;
     const sint32 disp_range = max_disparity - min_disparity;
 
     //计算最优视差
     for (int i = 0; i < height_; i++) {
         for (int j = 0; j < width_; j++) {
-            if(i == 316 && j == 387){
-                int a = 10;
-            }
             uint8 max_cost = 0;
             uint8 min_cost = INT8_MAX;
             uint8 best_disparity = 0;
@@ -110,24 +173,27 @@ void SGM::ComputeCost() {
         return;
     }
     //计算代价（基于Hamming距离）
+    int count = 1;
     for (int i = 0; i < height_; i++) {
+
         for (int j = 0; j < width_; j++) {
             for (int d = min_disparity; d < max_disparity; d++) {
                 auto &cost = cost_init_[i * width_ * disp_range + j * disp_range + (d - min_disparity)];
                 if (j - d < 0 || j - d >= width_) {
                     cost = UINT8_MAX / 2;
                     continue;
-                }
-                if (option_.censusSize == Census5x5) {
+                }else{
                     const auto &census_val_l = census_left_.at<u_int32_t>(i, j);
-                    const auto &census_val_r = census_right_.at<u_int32_t>(i, j-d);
+                    const auto &census_val_r = census_right_.at<u_int32_t>(i, j - d);
                     cost = sgm_util::Hamming32(census_val_l, census_val_r);
+
                 }
             }
         }
     }
-
 }
+
+
 
 void SGM::CensusTransform() {
     if (option_.censusSize == Census5x5) {

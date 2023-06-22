@@ -21,11 +21,6 @@
 		{
 			"isCMake" : true,
 			"isExternal" : true,
-			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeUnixFindMake.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
 			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeSystemSpecificInitialize.cmake"
 		},
 		{
@@ -549,21 +544,6 @@
 		{
 			"isCMake" : true,
 			"isExternal" : true,
-			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeFindCodeBlocks.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeExtraGeneratorDetermineCompilerMacrosAndIncludeDirs.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/ProcessorCount.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
 			"path" : "/snap/clion/237/bin/cmake/linux/x64/share/cmake-3.25/Modules/CMakeCInformation.cmake"
 		},
 		{
@@ -784,8 +764,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/liangdaxin/computer_vision/Canny_edge_detection/cmake-build-debug",
-		"source" : "/home/liangdaxin/computer_vision/Canny_edge_detection"
+		"build" : "/media/liangdaxin/sd1/computer_vision/Canny_edge_detection/cmake-build-debug",
+		"source" : "/media/liangdaxin/sd1/computer_vision/Canny_edge_detection"
 	},
 	"version" : 
 	{
