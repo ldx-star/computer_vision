@@ -76,14 +76,14 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
     //视差计算
     SGM::ComputeDisparity(cost_aggr_);
     sgm_util::save_img(disp_left_,"../out/cost_aggr.jpg");
-//    SGM::ComputeDisparity(cost_aggr_1_);
-//    sgm_util::save_img(disp_left_,"../out/aggr1.jpg");
-//    SGM::ComputeDisparity(cost_aggr_2_);
-//    sgm_util::save_img(disp_left_,"../out/aggr2.jpg");
-//    SGM::ComputeDisparity(cost_aggr_3_);
-//    sgm_util::save_img(disp_left_,"../out/aggr3.jpg");
-//    SGM::ComputeDisparity(cost_aggr_4_);
-//    sgm_util::save_img(disp_left_,"../out/aggr4.jpg");
+    SGM::ComputeDisparity(cost_aggr_1_);
+    sgm_util::save_img(disp_left_,"../out/aggr1.jpg");
+    SGM::ComputeDisparity(cost_aggr_2_);
+    sgm_util::save_img(disp_left_,"../out/aggr2.jpg");
+    SGM::ComputeDisparity(cost_aggr_3_);
+    sgm_util::save_img(disp_left_,"../out/aggr3.jpg");
+    SGM::ComputeDisparity(cost_aggr_4_);
+    sgm_util::save_img(disp_left_,"../out/aggr4.jpg");
 
 
 //    cv::Mat img = disp_left_.clone();
@@ -151,16 +151,27 @@ void SGM::ComputeDisparity(uint8* cost_ptr) {
                 }
                 max_cost = std::max(max_cost, cost);
             }
-            //最小代价对应的视差值为最优视差
-            if (max_cost != min_cost) {
-                if (best_disparity != 0) {
-                    int a = 10;
-                }
-                disp_left_.at<float>(i, j) = static_cast<float>(best_disparity);
-            } else {
-                //所有视差代价都一样则为无效视差
-                disp_left_.at<float>(i, j) = 0;
+//            //最小代价对应的视差值为最优视差
+//            if (max_cost != min_cost) {
+//                disp_left_.at<uint8_t>(i, j) = best_disparity;
+//            } else {
+//                //所有视差代价都一样则为无效视差
+//                disp_left_.at<uint8_t>(i, j) = 0;
+//            }
+
+            //亚像素拟合
+            if(best_disparity == min_disparity || best_disparity == max_disparity- 1){
+                disp_left_.at<float>(i,j) = 0;
+                continue;
+            }else{
+                const sint32 idx_1 = best_disparity - 1 -min_disparity;
+                const sint32 idx_2 = best_disparity + 1 -min_disparity;
+                const sint32 cost1 = cost_ptr[idx_1];
+                const sint32 cost2 = cost_ptr[idx_2];
+                const uint16 denom = std::max(1,cost1+cost2-2*min_cost );
+                disp_left_.at<float>(i,j) = float(best_disparity) + (cost1-cost2)/(2.0 * denom);
             }
+
         }
     }
 }

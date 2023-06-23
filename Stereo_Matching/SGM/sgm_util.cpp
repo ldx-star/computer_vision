@@ -26,7 +26,7 @@ void sgm_util::census_transform_5x5(const cv::Mat &img, cv::Mat &census, const s
 }
 
 void sgm_util::save_img(cv::Mat &img, const std::string &filename) {
-    img.convertTo(img, CV_8U);
+    //img.convertTo(img, CV_8U);
     cv::imwrite(filename, img);
 }
 
