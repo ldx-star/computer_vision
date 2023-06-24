@@ -16,6 +16,13 @@ SGM::~SGM() {
     delete[] cost_init_;
     delete[] cost_aggr_;
     delete[] cost_aggr_1_;
+    delete[] cost_aggr_2_;
+    delete[] cost_aggr_3_;
+    delete[] cost_aggr_4_;
+    delete[] cost_aggr_5_;
+    delete[] cost_aggr_6_;
+    delete[] cost_aggr_7_;
+    delete[] cost_aggr_8_;
 }
 
 bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOption &option) {
@@ -45,6 +52,12 @@ bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOp
     cost_aggr_2_ = new uint8[size]();
     cost_aggr_3_ = new uint8[size]();
     cost_aggr_4_ = new uint8[size]();
+    cost_aggr_5_ = new uint8[size]();
+    cost_aggr_6_ = new uint8[size]();
+    cost_aggr_7_ = new uint8[size]();
+    cost_aggr_8_ = new uint8[size]();
+
+
 
     is_initialized_ = true;
 }
@@ -73,17 +86,49 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
     //聚合代价
     CostAggregation();
 
-    //视差计算
-    SGM::ComputeDisparity(cost_aggr_);
-    sgm_util::save_img(disp_left_,"../out/cost_aggr.jpg");
-    SGM::ComputeDisparity(cost_aggr_1_);
-    sgm_util::save_img(disp_left_,"../out/aggr1.jpg");
-    SGM::ComputeDisparity(cost_aggr_2_);
-    sgm_util::save_img(disp_left_,"../out/aggr2.jpg");
-    SGM::ComputeDisparity(cost_aggr_3_);
-    sgm_util::save_img(disp_left_,"../out/aggr3.jpg");
-    SGM::ComputeDisparity(cost_aggr_4_);
-    sgm_util::save_img(disp_left_,"../out/aggr4.jpg");
+    end = std::chrono::steady_clock::now();
+    tt = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    if(option_.num_paths == 8){
+        printf("cost aggregation of 8 branch! timimg:%lfs\n", tt.count() / 1000.0);
+    }else{
+        printf("cost aggregation of 4 branch! timimg:%lfs\n", tt.count() / 1000.0);
+    }
+
+
+    //视差计算并保存
+    if(option_.num_paths == 8){
+        SGM::ComputeDisparity(cost_aggr_1_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_1_.jpg");
+        SGM::ComputeDisparity(cost_aggr_2_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_2_.jpg");
+        SGM::ComputeDisparity(cost_aggr_3_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_3_.jpg");
+        SGM::ComputeDisparity(cost_aggr_4_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_4_.jpg");
+        SGM::ComputeDisparity(cost_aggr_5_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_5_.jpg");
+        SGM::ComputeDisparity(cost_aggr_6_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_6_.jpg");
+        SGM::ComputeDisparity(cost_aggr_7_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_7_.jpg");
+        SGM::ComputeDisparity(cost_aggr_8_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr_8_.jpg");
+        SGM::ComputeDisparity(cost_aggr_);
+        sgm_util::save_img(disp_left_,"../out/path8/cost_aggr.jpg");
+
+    }else{
+        SGM::ComputeDisparity(cost_aggr_1_);
+        sgm_util::save_img(disp_left_,"../out/path4/cost_aggr_1_.jpg");
+        SGM::ComputeDisparity(cost_aggr_2_);
+        sgm_util::save_img(disp_left_,"../out/path4/cost_aggr_2_.jpg");
+        SGM::ComputeDisparity(cost_aggr_3_);
+        sgm_util::save_img(disp_left_,"../out/path4/cost_aggr_3_.jpg");
+        SGM::ComputeDisparity(cost_aggr_4_);
+        sgm_util::save_img(disp_left_,"../out/path4/cost_aggr_4_.jpg");
+        SGM::ComputeDisparity(cost_aggr_);
+        sgm_util::save_img(disp_left_,"../out/path4/cost_aggr.jpg");
+    }
+
 
 
 //    cv::Mat img = disp_left_.clone();
@@ -121,14 +166,36 @@ void SGM::CostAggregation() {
 
     if(option_.num_paths == 8){
         //左上右下聚合
-
+        sgm_util::CostAggregateDiagonal1(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_5_,
+                                         true);
+        sgm_util::CostAggregateDiagonal1(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_6_,
+                                         false);
         //右上左下聚合
+        sgm_util::CostAggregateDiagonal2(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_7_,
+                                         true);
+        sgm_util::CostAggregateDiagonal2(left_img_,width_,height_,min_disparity,max_disparity,P1,P2,cost_init_,cost_aggr_8_,
+                                         false);
     }
 
     //把4/8个方向加起来
-    for(sint32 i = 0; i < size;i++){
-        cost_aggr_[i] = cost_aggr_1_[i] + cost_aggr_2_[i] + cost_aggr_3_[i] + cost_aggr_4_[i];
+//    if(option_.num_paths == 4){
+//        for(sint32 i = 0; i < size;i++){
+//            cost_aggr_[i] = cost_aggr_1_[i] + cost_aggr_2_[i] + cost_aggr_3_[i] + cost_aggr_4_[i];
+//        }
+//    }else if(option_.num_paths == 8){
+//        for(sint32 i = 0; i < size;i++){
+//            cost_aggr_[i] = cost_aggr_1_[i] + cost_aggr_2_[i] + cost_aggr_3_[i] + cost_aggr_4_[i] + cost_aggr_5_[i] + cost_aggr_6_[i] + cost_aggr_7_[i] + cost_aggr_8_[i];
+//        }
+//    }
+    for (sint32 i = 0; i < size; i++) {
+        if (option_.num_paths == 4 || option_.num_paths == 8) {
+            cost_aggr_[i] += cost_aggr_1_[i] + cost_aggr_2_[i] + cost_aggr_3_[i] + cost_aggr_4_[i];
+        }
+        if (option_.num_paths == 8) {
+            cost_aggr_[i] += cost_aggr_5_[i] + cost_aggr_6_[i] + cost_aggr_7_[i] + cost_aggr_8_[i];
+        }
     }
+
 }
 
 void SGM::ComputeDisparity(uint8* cost_ptr) {

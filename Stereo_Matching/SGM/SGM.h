@@ -30,7 +30,7 @@ public:
 
         CensusSize censusSize;
 
-        SGMOption(): num_paths(8), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
+        SGMOption(): num_paths(4), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
     };
 
     bool Initialize(const uint32& width, const uint32& height,const SGMOption& option);
@@ -62,6 +62,10 @@ private:
     uint8* cost_aggr_2_;// 聚合匹配代价-方向2  右 -> 左
     uint8* cost_aggr_3_;// 聚合匹配代价-方向3  上 -> 下
     uint8* cost_aggr_4_;// 聚合匹配代价-方向4  下 -> 上
+    uint8* cost_aggr_5_;// 聚合匹配代价-方向5  左上 -> 右下
+    uint8* cost_aggr_6_;// 聚合匹配代价-方向6  右下 -> 左上
+    uint8* cost_aggr_7_;// 聚合匹配代价-方向7  右上 -> 左下
+    uint8* cost_aggr_8_;// 聚合匹配代价-方向8  左下 -> 右上
 };
 
 

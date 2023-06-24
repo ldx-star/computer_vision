@@ -33,6 +33,14 @@ namespace sgm_util {
     void CostAggregateUpDown(const cv::Mat& img_data, const sint32& width,const sint32& height, const sint32& min_disparity, const sint32& max_disparity,
                                 const sint32& p1, const sint32& p2_init, const uint8* cost_init, uint8* cost_aggr, bool is_forward = true);
 
+    //左上->右下/右下->左上
+    void CostAggregateDiagonal1(const cv::Mat& img_data, const sint32& width,const sint32& height, const sint32& min_disparity, const sint32& max_disparity,
+                             const sint32& p1, const sint32& p2_init, const uint8* cost_init, uint8* cost_aggr, bool is_forward = true);
+
+    //右上->左下/左下->右上
+    void CostAggregateDiagonal2(const cv::Mat& img_data, const sint32& width,const sint32& height, const sint32& min_disparity, const sint32& max_disparity,
+                                const sint32& p1, const sint32& p2_init, const uint8* cost_init, uint8* cost_aggr, bool is_forward = true);
+
     void save_img(cv::Mat& img,const std::string& filename);
 };
 
