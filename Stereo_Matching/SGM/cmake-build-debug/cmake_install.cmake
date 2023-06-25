@@ -1,4 +1,4 @@
-# Install script for directory: /home/liangdaxin/computer_vision/Stereo_Matching/SGM
+# Install script for directory: /media/liangdaxin/sd1/computer_vision/Stereo_Matching/SGM
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/liangdaxin/computer_vision/Stereo_Matching/SGM/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/media/liangdaxin/sd1/computer_vision/Stereo_Matching/SGM/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

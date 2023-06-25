@@ -26,11 +26,13 @@ public:
 
         sint32 p1; // 惩罚项参数 p1
         sint32 p2; // 惩罚项参数 p2
-
+        bool is_check_lr;//一致性检查
+        bool is_check_unique;//判断一致性约束
+        float32 uniqueness_ratio;
 
         CensusSize censusSize;
 
-        SGMOption(): num_paths(4), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
+        SGMOption(): num_paths(8),uniqueness_ratio(0.1),is_check_lr(true), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
     };
 
     bool Initialize(const uint32& width, const uint32& height,const SGMOption& option);
@@ -44,6 +46,10 @@ private:
     void CostAggregation();
     //视差计算
     void ComputeDisparity(uint8* cost_ptr);
+    //计算右视差
+    void ComputeRightDisparity();
+    //一致性检测
+    void LRCheck();
 private:
     bool is_initialized_; // 是否初始化标志
     cv::Mat left_img_;
@@ -53,8 +59,10 @@ private:
     SGMOption option_;
     cv::Mat census_left_;
     cv::Mat census_right_;
-    uint8* cost_init_; // （rows,cols,disp_range）
+    uint8* cost_init_; // (rows,cols,disp_range)
+
     cv::Mat disp_left_;
+    cv::Mat disp_right_;
 
      uint8* cost_aggr_;// 聚合匹配代价
 
