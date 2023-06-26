@@ -39,8 +39,8 @@ bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOp
         census_right_ = cv::Mat::zeros(height, width, CV_32S);
     }
 
-    disp_left_ = cv::Mat::zeros(height, width, CV_32F);
-    disp_right_ = cv::Mat::zeros(height, width, CV_32F);
+    disp_left_ = new float32[height * width]();
+    disp_right_ = new float32[height * width]();
     //视差范围
     const sint32 disp_range = option.max_disparity - option.min_disparity;
     if (disp_range <= 0) {
@@ -60,6 +60,32 @@ bool SGM::Initialize(const uint32 &width, const uint32 &height, const SGM::SGMOp
 
 
     is_initialized_ = true;
+}
+
+void SGM::Show_disparity() {
+    cv::Mat disp_img = cv::Mat::zeros(height_, width_, CV_8U);
+    auto disp_data = disp_left_;
+    float min_disp = width_;
+    float max_disp = 0;
+    for (int i = 0; i < height_; i++) {
+        for (int j = 0; j < width_; j++) {
+            float disp = disp_data[i * width_ + j];
+            if (disp_data[i * width_ + j] != Invalid_Float) {
+                min_disp = std::min(min_disp, disp);
+                max_disp = std::max(max_disp, disp);
+            }
+        }
+    }
+    for (int i = 0; i < height_; i++) {
+        for (int j = 0; j < width_; j++) {
+            float disp = disp_data[i * width_ + j];
+            if (disp != Invalid_Float) {
+                disp_img.at<uint8_t>(i, j) = int((disp - min_disp) / (max_disp - min_disp) * 255);
+            }
+        }
+    }
+    cv::imshow("disp_img", disp_img);
+    cv::waitKey();
 }
 
 bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp_left) {
@@ -96,42 +122,7 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
 
 
     //视差计算并保存
-    if (option_.num_paths == 8) {
-        SGM::ComputeDisparity(cost_init_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_init.jpg");
-        SGM::ComputeDisparity(cost_aggr_1_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_1_.jpg");
-        SGM::ComputeDisparity(cost_aggr_2_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_2_.jpg");
-        SGM::ComputeDisparity(cost_aggr_3_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_3_.jpg");
-        SGM::ComputeDisparity(cost_aggr_4_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_4_.jpg");
-        SGM::ComputeDisparity(cost_aggr_5_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_5_.jpg");
-        SGM::ComputeDisparity(cost_aggr_6_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_6_.jpg");
-        SGM::ComputeDisparity(cost_aggr_7_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_7_.jpg");
-        SGM::ComputeDisparity(cost_aggr_8_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr_8_.jpg");
-        SGM::ComputeDisparity(cost_aggr_);
-        sgm_util::save_img(disp_left_, "../out/path8/cost_aggr.jpg");
-
-    } else {
-        SGM::ComputeDisparity(cost_init_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_init.jpg");
-        SGM::ComputeDisparity(cost_aggr_1_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_aggr_1_.jpg");
-        SGM::ComputeDisparity(cost_aggr_2_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_aggr_2_.jpg");
-        SGM::ComputeDisparity(cost_aggr_3_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_aggr_3_.jpg");
-        SGM::ComputeDisparity(cost_aggr_4_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_aggr_4_.jpg");
-        SGM::ComputeDisparity(cost_aggr_);
-        sgm_util::save_img(disp_left_, "../out/path4/cost_aggr.jpg");
-    }
+    SGM::ComputeDisparity(cost_aggr_);
 
     //左右一致性检查
     if (option_.is_check_lr) {
@@ -140,6 +131,13 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
         //一致性检查
         LRCheck();
     }
+
+    //去除最小连通区域
+    if(option_.is_remove_speckles){
+        sgm_util::RemoveSpeckles(disp_left_,width_,height_,1 ,option_.min_speckle_area);
+    }
+
+
 
 //    cv::Mat img = disp_left_.clone();
 //    img /= 255;
@@ -150,7 +148,24 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
 
 
 void SGM::LRCheck() {
-
+    auto left_disparity = disp_left_;
+    auto right_disparity = disp_right_;
+    const uint32 width = width_;
+    const uint32 height = height_;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int left_disp = static_cast<int>(left_disparity[i * width + j] + 0.5);// +0.5做到四舍五入
+            int col_right = j - left_disp;
+            if (col_right >= 0 && col_right < width){
+                int right_disp = static_cast<int>(right_disparity[i * width + col_right] + 0.5);
+                if (abs(left_disp - right_disp) > option_.lrcheck_thres) {
+                    left_disparity[i * width + j] = Invalid_Float;
+                }
+            } else {
+                left_disparity[i * width + j] = Invalid_Float;
+            }
+        }
+    }
 }
 
 void SGM::ComputeRightDisparity() {
@@ -161,47 +176,48 @@ void SGM::ComputeRightDisparity() {
     uint32 width = width_;
     uint32 height = height_;
 
-    auto cost_aggr = cost_aggr_;
+    const auto cost_aggr = cost_aggr_;
+    const auto disparity = disp_right_;
 
-    std::vector<uint16> cost_local(disp_range);
+    std::vector<uint8> cost_local(disp_range);
 
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j > height; j++) {
-            auto cost = cost_aggr + i * width * disp_range + j * disp_range;
-            uint8 min_cost = UINT16_MAX;
-            uint8 sec_min_cost = UINT16_MAX;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            uint8 min_cost = UINT8_MAX;
+            uint8 sec_min_cost = UINT8_MAX;
             sint32 best_disparity = 0;
             for (int d = min_disparity; d < max_disparity; d++) {
                 const sint32 d_idx = d - min_disparity;
                 const sint32 col_left = j + d;
+                auto cost = cost_aggr + i * width * disp_range + col_left * disp_range;
                 if (col_left > 0 && col_left < width) {
                     cost_local[d_idx] = cost[d_idx];
-                    if(min_cost > cost[d_idx]){
+                    if (min_cost > cost[d_idx]) {
                         min_cost = cost[d_idx];
                         best_disparity = d;
                     }
-                }else{
-                    cost_local[d_idx] = UINT16_MAX;
+                } else {
+                    cost_local[d_idx] = UINT8_MAX;
                 }
             }
 
-            if(option_.is_check_unique){
+            if (option_.is_check_unique) {
                 //一个像素中只能有一个 最小代价和次小代价的差需要超过一个阈值
-                for(int d = min_disparity; d < max_disparity;d++){
-                    if(d == best_disparity){
+                for (int d = min_disparity; d < max_disparity; d++) {
+                    if (d == best_disparity) {
                         //跳过最优视差
                         continue;
                     }
-                    sec_min_cost = std::min(sec_min_cost, cost[d-min_disparity]);
+                    sec_min_cost = std::min(sec_min_cost, cost_local[d - min_disparity]);
                 }
-                if(sec_min_cost - min_cost <= static_cast<uint16>( float(min_cost) * (1 - option_.uniqueness_ratio))){
-                    disp_right_.at<float>(i,j) = 0;//无效视差
+                if (sec_min_cost - min_cost <= static_cast<uint16>( float(min_cost) * (1 - option_.uniqueness_ratio))) {
+                    disparity[i * width + j] = Invalid_Float;//无效视差
                     continue;
                 }
             }
             //亚像素拟合
             if (best_disparity == min_disparity || best_disparity == max_disparity - 1) {
-                disp_right_.at<float>(i, j) = 0;
+                disparity[i * width + j] = Invalid_Float;// 无效视差
                 continue;
             } else {
                 const sint32 idx_1 = best_disparity - 1 - min_disparity;
@@ -209,9 +225,8 @@ void SGM::ComputeRightDisparity() {
                 const sint32 cost1 = cost_local[idx_1];
                 const sint32 cost2 = cost_local[idx_2];
                 const uint16 denom = std::max(1, cost1 + cost2 - 2 * min_cost);
-                disp_right_.at<float>(i, j) = static_cast<float>(best_disparity) + (cost1 - cost2) / (2.0 * denom);
+                disparity[i * width + j] = static_cast<float>(best_disparity) + (cost1 - cost2) / (2.0 * denom);
             }
-
         }
     }
 }
@@ -280,15 +295,22 @@ void SGM::ComputeDisparity(uint8 *cost_ptr) {
     const sint32 max_disparity = option_.max_disparity;
     //auto cost_ptr = cost_aggr_2_;
     const sint32 disp_range = max_disparity - min_disparity;
-
+    auto disparity = disp_left_;
+    std::vector<uint8> cost_local(disp_range);
+    uint32 height = height_;
+    uint32 width = width_;
     //计算最优视差
-    for (int i = 0; i < height_; i++) {
-        for (int j = 0; j < width_; j++) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (i == 1 && j == 6) {
+                int a = 0;
+            }
             uint8 max_cost = 0;
             uint8 min_cost = INT8_MAX;
             uint8 best_disparity = 0;
             for (uint8 d = min_disparity; d < max_disparity; d++) {
-                const auto &cost = cost_ptr[i * width_ * disp_range + j * disp_range + (d - min_disparity)];
+                const auto &cost = cost_local[d - min_disparity] = cost_ptr[i * width * disp_range + j * disp_range +
+                                                                            (d - min_disparity)];
                 if (min_cost > cost) {
                     min_cost = cost;
                     best_disparity = d;
@@ -305,15 +327,16 @@ void SGM::ComputeDisparity(uint8 *cost_ptr) {
 
             //亚像素拟合
             if (best_disparity == min_disparity || best_disparity == max_disparity - 1) {
-                disp_left_.at<float>(i, j) = 0;
+                disparity[i * width + j] = Invalid_Float;
                 continue;
             } else {
                 const sint32 idx_1 = best_disparity - 1 - min_disparity;
                 const sint32 idx_2 = best_disparity + 1 - min_disparity;
-                const sint32 cost1 = cost_ptr[idx_1];
-                const sint32 cost2 = cost_ptr[idx_2];
+                const sint32 cost1 = cost_local[idx_1];
+                const sint32 cost2 = cost_local[idx_2];
                 const uint16 denom = std::max(1, cost1 + cost2 - 2 * min_cost);
-                disp_left_.at<float>(i, j) = float(best_disparity) + (cost1 - cost2) / (2.0 * denom);
+                float value = float(best_disparity) + (cost1 - cost2) / (2.0 * denom);
+                disparity[i * width + j]  = value;
             }
 
         }

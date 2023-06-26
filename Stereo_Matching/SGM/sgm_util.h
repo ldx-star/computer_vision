@@ -42,6 +42,17 @@ namespace sgm_util {
                                 const sint32& p1, const sint32& p2_init, const uint8* cost_init, uint8* cost_aggr, bool is_forward = true);
 
     void save_img(cv::Mat& img,const std::string& filename);
+
+    /*
+     *  @brief 移除小连通区域
+     *  @param disparity_map    视差图
+     *  @param width            宽
+     *  @param height           高
+     *  @param diff_insame      同一连通区域内的局部像素差异
+     *  @param min_spackle_area 最小连通区面积
+     *  @param invalid_val      无效值
+     */
+    void RemoveSpeckles(float32* disparity_map, const uint32& width, const uint32& height,const uint32& diff_insame, const uint32& min_speckle_area);
 };
 
 

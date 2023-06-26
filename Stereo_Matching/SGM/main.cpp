@@ -3,7 +3,7 @@
 //
 #include "SGM.h"
 #include <string>
-#include <vector>
+
 int main(int argv, char** argc){
     if(argv < 3){
         std::cout << "参数错误" << std::endl;
@@ -39,7 +39,7 @@ int main(int argv, char** argc){
     sgm.Match(left_img,right_img,disp_img);
 
     //显示视差图
-
+    sgm.Show_disparity();
 
 
     return 0;

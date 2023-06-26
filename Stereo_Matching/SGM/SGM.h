@@ -29,14 +29,17 @@ public:
         bool is_check_lr;//一致性检查
         bool is_check_unique;//判断一致性约束
         float32 uniqueness_ratio;
-
+        float lrcheck_thres;
+        bool is_remove_speckles;
+        uint32 min_speckle_area;
         CensusSize censusSize;
 
-        SGMOption(): num_paths(8),uniqueness_ratio(0.1),is_check_lr(true), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
+        SGMOption(): min_speckle_area(20),is_remove_speckles(true),lrcheck_thres(1.0), is_check_unique(true),num_paths(4),uniqueness_ratio(0.95),is_check_lr(true), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
     };
 
     bool Initialize(const uint32& width, const uint32& height,const SGMOption& option);
     bool Match(const cv::Mat& img_left, const cv::Mat& img_right, cv::Mat& disp_left);
+    void Show_disparity();
     bool Reset(const uint32& width, const uint32& height, const SGMOption& option);
 private:
     void CensusTransform();
@@ -61,8 +64,8 @@ private:
     cv::Mat census_right_;
     uint8* cost_init_; // (rows,cols,disp_range)
 
-    cv::Mat disp_left_;
-    cv::Mat disp_right_;
+    float32* disp_left_;
+    float32* disp_right_;
 
      uint8* cost_aggr_;// 聚合匹配代价
 
