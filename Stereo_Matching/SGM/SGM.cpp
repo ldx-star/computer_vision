@@ -84,6 +84,7 @@ void SGM::Show_disparity() {
             }
         }
     }
+//    cv::imwrite("../out/not_use_MedianFilter.jpg",disp_img);
     cv::imshow("disp_img", disp_img);
     cv::waitKey();
 }
@@ -114,15 +115,19 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
 
     end = std::chrono::steady_clock::now();
     tt = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    if (option_.num_paths == 8) {
-        printf("cost aggregation of 8 branch! timimg:%lfs\n", tt.count() / 1000.0);
-    } else {
-        printf("cost aggregation of 4 branch! timimg:%lfs\n", tt.count() / 1000.0);
-    }
+    printf("cost aggregation! timimg:%lfs\n", tt.count() / 1000.0);
 
+    start = std::chrono::steady_clock::now();
 
     //视差计算并保存
     SGM::ComputeDisparity(cost_aggr_);
+
+    end = std::chrono::steady_clock::now();
+    tt = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    printf("disparity calculation! timimg:%lfs\n", tt.count() / 1000.0);
+
+    start = std::chrono::steady_clock::now();
+
 
     //左右一致性检查
     if (option_.is_check_lr) {
@@ -133,9 +138,20 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
     }
 
     //去除最小连通区域
-    if(option_.is_remove_speckles){
-        sgm_util::RemoveSpeckles(disp_left_,width_,height_,1 ,option_.min_speckle_area);
+    if (option_.is_remove_speckles) {
+        sgm_util::RemoveSpeckles(disp_left_, width_, height_, 1, option_.min_speckle_area);
     }
+
+    if (option_.is_fill_holes) {
+        FillHolesInDispMap();
+    }
+
+    //中值滤波
+    sgm_util::MedianFilter(disp_left_, disp_left_, width_, height_, 3);
+
+    end = std::chrono::steady_clock::now();
+    tt = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    printf("disparity optimization ! timimg:%lfs\n", tt.count() / 1000.0);
 
 
 
@@ -147,21 +163,204 @@ bool SGM::Match(const cv::Mat &img_left, const cv::Mat &img_right, cv::Mat &disp
 }
 
 
+void SGM::FillHolesInDispMap() {
+//    const int &width = width_;
+//    const int &height = height_;
+//    float32 *disparity_map = disp_left_;
+//    auto &occlusions = occlusions_;//遮挡区像素集
+//    auto &mismatches = mismatches_;//误匹配区像素集
+//    std::vector<float> angles = {0, M_PI / 4, M_PI / 2, M_PI * 3 / 4, M_PI, M_PI * 5 / 4, M_PI * 3 / 2, M_PI * 7 / 4};
+//
+//    for (int k = 0; k < 3; k++) {
+//        std::vector<float> angle_disp;//存放不同方向上碰到的第一个值
+//
+//        auto &disp_ptr = (k == 0) ? occlusions : mismatches;
+//        //第一次循环处理遮挡区，第二次循环处理误匹配区，第三次循环处理剩下的区域
+//        if (k == 2) {
+//            disp_ptr.clear();
+//            for (int i = 0; i < height; i++) {
+//                for (int j = 0; j < width; j++) {
+//                    if (disparity_map[i * width + j] == Invalid_Float) {
+//                        disp_ptr.emplace_back(std::pair<int, int>(i, j));
+//                    }
+//                }
+//            }
+//        }
+//        if (disp_ptr.empty()) {
+//            continue;
+//        }
+//        for (auto pair: disp_ptr) {
+//            int row = pair.first;
+//            int col = pair.second;
+//            angle_disp.clear();
+//            //8个方向
+//            for (auto angle: angles) {
+//
+//
+//                auto sin = std::sin(angle);
+//                auto cos = std::cos(angle);
+//
+//                for (int n = 1; n < 10; n++) {
+//                    int y = 0, x = 0;
+//                    //找到该方向上的第一个值
+//                    y = lround(row + n * sin);
+//                    x = lround(col + n * cos);
+//                    //std::cout << x << " " << y << std::endl;
+//                    if (y >= 0 && y < height && x >= 0 && x < width) {
+//                        float disp = disparity_map[y * width + x];
+//                        if (disp != Invalid_Float) {
+//                            angle_disp.emplace_back(disp);
+//                            break;
+//                        }
+//                    } else {
+//                        break;
+//                    }
+//                }
+//            }
+//            if (angle_disp.empty()) {
+//                continue;
+//            }
+//            std::sort(angle_disp.begin(), angle_disp.end());
+//            //k==0时填充遮挡区
+//            if (k == 0) {
+//                //对于遮挡区像素，因为它的身份是背景像素，所以它是不能选择周围的前景像素视差值的，应该选择周围背景像素的视差值。由于背景像素视差值比前景像素小，
+//                //所以在收集周围的有效视差值后，应选择较小的几个，具体哪一个呢？SGM作者选择的是次最小视差。
+//                if (angle_disp.size() > 1) {
+//                    disparity_map[row * width + col] = angle_disp[1];//次最小值
+//                } else {
+//                    disparity_map[row * width + col] = angle_disp[0];//只有一个值，就取最小值
+//                }
+//            } else {
+//                //对于误匹配像素，它并不位于遮挡区，所以周围的像素都是可见的，而且没有遮挡导致的视差非连续的情况，
+//                //它就像一个连续的表面凸起的一小块噪声，这时周围的视差值都是等价的，没有哪个应选哪个不应选，这时取中值就很适合
+//                disparity_map[row * width + col] = angle_disp[angle_disp.size() / 2];//取中值
+//            }
+//        }
+//
+//    }
+
+    const sint32 width = width_;
+    const sint32 height = height_;
+
+    std::vector<float32> disp_collects;
+
+    // 定义8个方向
+    const float32 pi = 3.1415926f;
+    float32 angle1[8] = {pi, 3 * pi / 4, pi / 2, pi / 4, 0, 7 * pi / 4, 3 * pi / 2, 5 * pi / 4};
+    float32 angle2[8] = {pi, 5 * pi / 4, 3 * pi / 2, 7 * pi / 4, 0, pi / 4, pi / 2, 3 * pi / 4};
+    float32 *angle = angle1;
+    // 最大搜索行程，没有必要搜索过远的像素
+    const sint32 max_search_length = 1.0 * std::max(abs(option_.max_disparity), abs(option_.min_disparity));
+
+    float32 *disp_ptr = disp_left_;
+    for (sint32 k = 0; k < 3; k++) {
+        // 第一次循环处理遮挡区，第二次循环处理误匹配区
+        auto &trg_pixels = (k == 0) ? occlusions_ : mismatches_;
+        if (trg_pixels.empty()) {
+            continue;
+        }
+        std::vector<float32> fill_disps(trg_pixels.size());
+        std::vector<std::pair<sint32, sint32>> inv_pixels;
+        if (k == 2) {
+            //  第三次循环处理前两次没有处理干净的像素
+            for (sint32 i = 0; i < height; i++) {
+                for (sint32 j = 0; j < width; j++) {
+                    if (disp_ptr[i * width + j] == Invalid_Float) {
+                        inv_pixels.emplace_back(i, j);
+                    }
+                }
+            }
+            trg_pixels = inv_pixels;
+        }
+
+        // 遍历待处理像素
+        for (auto n = 0u; n < trg_pixels.size(); n++) {
+            auto &pix = trg_pixels[n];
+            const sint32 y = pix.first;
+            const sint32 x = pix.second;
+
+            if (y == height / 2) {
+                angle = angle2;
+            }
+
+            // 收集8个方向上遇到的首个有效视差值
+            disp_collects.clear();
+            for (sint32 s = 0; s < 8; s++) {
+                const float32 ang = angle[s];
+                const float32 sina = float32(sin(ang));
+                const float32 cosa = float32(cos(ang));
+                for (sint32 m = 1; m < max_search_length; m++) {
+                    const sint32 yy = lround(y + m * sina);
+                    const sint32 xx = lround(x + m * cosa);
+                    if (yy < 0 || yy >= height || xx < 0 || xx >= width) {
+                        break;
+                    }
+                    const auto &disp = *(disp_ptr + yy * width + xx);
+                    if (disp != Invalid_Float) {
+                        disp_collects.push_back(disp);
+                        break;
+                    }
+                }
+            }
+            if (disp_collects.empty()) {
+                continue;
+            }
+
+            std::sort(disp_collects.begin(), disp_collects.end());
+
+            // 如果是遮挡区，则选择第二小的视差值
+            // 如果是误匹配区，则选择中值
+            if (k == 0) {
+                if (disp_collects.size() > 1) {
+                    fill_disps[n] = disp_collects[1];
+                } else {
+                    fill_disps[n] = disp_collects[0];
+                }
+            } else {
+                fill_disps[n] = disp_collects[disp_collects.size() / 2];
+            }
+        }
+        for (auto n = 0u; n < trg_pixels.size(); n++) {
+            auto &pix = trg_pixels[n];
+            const sint32 y = pix.first;
+            const sint32 x = pix.second;
+            disp_ptr[y * width + x] = fill_disps[n];
+        }
+    }
+
+}
+
 void SGM::LRCheck() {
     auto left_disparity = disp_left_;
     auto right_disparity = disp_right_;
+    auto &occlusions = occlusions_;
+    auto &mismatches = mismatches_;
     const uint32 width = width_;
     const uint32 height = height_;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             int left_disp = static_cast<int>(left_disparity[i * width + j] + 0.5);// +0.5做到四舍五入
             int col_right = j - left_disp;
-            if (col_right >= 0 && col_right < width){
+            if (col_right >= 0 && col_right < width) {
                 int right_disp = static_cast<int>(right_disparity[i * width + col_right] + 0.5);
                 if (abs(left_disp - right_disp) > option_.lrcheck_thres) {
+                    //无效视差，判断是遮挡区还是误匹配区
+                    int col_left = col_right + right_disp;
+                    if (col_left >= 0 && col_left < width) {
+                        int disp_l = static_cast<int>(left_disparity[i * width + col_right + right_disp] +
+                                                      0.5);   //右视图在左图的匹配点
+                        if (left_disp < disp_l) {
+                            //遮挡区
+                            occlusions.emplace_back(std::pair<int, int>(i, j));
+                        } else {
+                            mismatches.emplace_back(std::pair<int, int>(i, j));
+                        }
+                    }
+
                     left_disparity[i * width + j] = Invalid_Float;
                 }
             } else {
+                mismatches.emplace_back(std::pair<int, int>(i, j));
                 left_disparity[i * width + j] = Invalid_Float;
             }
         }
@@ -336,7 +535,7 @@ void SGM::ComputeDisparity(uint8 *cost_ptr) {
                 const sint32 cost2 = cost_local[idx_2];
                 const uint16 denom = std::max(1, cost1 + cost2 - 2 * min_cost);
                 float value = float(best_disparity) + (cost1 - cost2) / (2.0 * denom);
-                disparity[i * width + j]  = value;
+                disparity[i * width + j] = value;
             }
 
         }

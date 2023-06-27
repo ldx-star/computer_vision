@@ -31,10 +31,11 @@ public:
         float32 uniqueness_ratio;
         float lrcheck_thres;
         bool is_remove_speckles;
+        bool is_fill_holes;
         uint32 min_speckle_area;
         CensusSize censusSize;
 
-        SGMOption(): min_speckle_area(20),is_remove_speckles(true),lrcheck_thres(1.0), is_check_unique(true),num_paths(4),uniqueness_ratio(0.95),is_check_lr(true), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
+        SGMOption(): is_fill_holes(true),min_speckle_area(20),is_remove_speckles(true),lrcheck_thres(1.0), is_check_unique(true),num_paths(4),uniqueness_ratio(0.95),is_check_lr(true), min_disparity(0),max_disparity(64),censusSize(Census5x5),p1(10),p2(150){}
     };
 
     bool Initialize(const uint32& width, const uint32& height,const SGMOption& option);
@@ -53,6 +54,8 @@ private:
     void ComputeRightDisparity();
     //一致性检测
     void LRCheck();
+    //视差填充
+    void FillHolesInDispMap();
 private:
     bool is_initialized_; // 是否初始化标志
     cv::Mat left_img_;
@@ -77,6 +80,11 @@ private:
     uint8* cost_aggr_6_;// 聚合匹配代价-方向6  右下 -> 左上
     uint8* cost_aggr_7_;// 聚合匹配代价-方向7  右上 -> 左下
     uint8* cost_aggr_8_;// 聚合匹配代价-方向8  左下 -> 右上
+
+    //遮挡区域像素集
+    std::vector<std::pair<int,int>> occlusions_;
+    //误匹配区域像素集
+    std::vector<std::pair<int,int>> mismatches_;
 };
 
 

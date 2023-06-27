@@ -53,6 +53,16 @@ namespace sgm_util {
      *  @param invalid_val      无效值
      */
     void RemoveSpeckles(float32* disparity_map, const uint32& width, const uint32& height,const uint32& diff_insame, const uint32& min_speckle_area);
+
+    /*
+     *  @brief 中值滤波
+     *  @param in           数据源
+     *  @param out          目标数据
+     *  @param width        宽度
+     *  @param height       高度
+     *  @param window_size  窗口宽度
+     */
+    void MedianFilter(const float32* in,float32* out, const uint32& width, const uint32& height, const sint32& window_size);
 };
 
 

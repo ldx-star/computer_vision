@@ -39,6 +39,7 @@ int main(int argv, char** argc){
     sgm.Match(left_img,right_img,disp_img);
 
     //显示视差图
+
     sgm.Show_disparity();
 
 
